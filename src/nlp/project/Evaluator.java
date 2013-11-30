@@ -1,12 +1,8 @@
 package nlp.project;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import nlp.util.Counter;
 
@@ -17,9 +13,12 @@ public class Evaluator {
 	 * @param candidates - possible translated results
 	 * @param references - human translation references
 	 * @param n - the height order of n gram number, we will calculate from 1 to n
-	 * @return double value between 0.0 and 1.0
+	 * @return double value between 0.0 and 1.0, return -1.0 if input 
 	 */
 	public static double bleu(List<List<String>> candidates, List<List<String>> references, int n){
+		if (candidates.size() == 0 || references.size() == 0){
+			throw new IllegalStateException();
+		}
 		double score = 0.0;
 		// c is the total length of the candidates' corpus, 
 		// r is the sum of best matched length from references to each candidate
@@ -27,14 +26,18 @@ public class Evaluator {
 		for (List<String> candidate : candidates){
 			int candidateLength = candidate.size();	
 			c += candidateLength;
-			int distance = candidateLength;
-			for (List<String> reference : references){
-				int newDistance = Math.abs(reference.size() - candidateLength);
-				if (distance > newDistance){
-					distance = newDistance;
+			int closestRefLength = references.get(0).size();
+			int distance = Math.abs( closestRefLength - candidateLength);
+			if (references.size() > 1){ //we usually have only one reference translation
+				for (List<String> reference : references){
+					int newDistance = Math.abs(reference.size() - candidateLength);
+					if (distance > newDistance){
+						distance = newDistance;
+						closestRefLength = reference.size();
+					}
 				}
 			}
-			r += distance;
+			r += closestRefLength;
 		}
 		double brevityPenalty = 0.0;
 		if (c > r){
