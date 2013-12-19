@@ -28,7 +28,8 @@ import nlp.util.Indexer;
 public class CKYParserK implements Parser{
 	static final String root = "S";
 	static int rootIndex;
-	static final int K = 2;
+	static final int K = 5;
+	static int sumTop = 0;
 	
 	public void insert(List<Trace> list, Trace trace){
 		for (int i = 0; i < list.size(); i++){
@@ -51,7 +52,7 @@ public class CKYParserK implements Parser{
 		int sizeOfWords = sentence.size();
 		int sizeOfNonTer = indexer.size();
 		Map<String, List<Trace>>[][] score= new HashMap[sizeOfWords+1][sizeOfWords+1];
-		Map<String, int[]>[][] back = new HashMap[sizeOfWords+1][sizeOfWords+1];
+//		Map<String, int[]>[][] back = new HashMap[sizeOfWords+1][sizeOfWords+1];
 		for (int i = 0; i < sizeOfWords; i++){
 			String word = sentence.get(i);
 			score[i][i+1] = new HashMap<String, List<Trace>>();
@@ -138,8 +139,8 @@ public class CKYParserK implements Parser{
 					}
 					
 					// set score by unary rule
-						Queue<Trace> bestK2 = new PriorityQueue<Trace>();
-						
+					if (!bestK.isEmpty()){
+						Queue<Trace> bestK2 = new PriorityQueue<Trace>(bestK);
 						List<UnaryRule> unaryRules = uc.getClosedUnaryRulesByChild(parent);
 						for (UnaryRule unaryRule : unaryRules){
 							Iterator<Trace> iter = bestK.iterator();
@@ -155,33 +156,41 @@ public class CKYParserK implements Parser{
 								if (bestK2.size() > K){
 									bestK2.poll();
 								}
-//								List<Trace> bestK = score[i][j].get(parent);
-//								if (bestK != null){
-//									double prob = bestK.get(0).score;
-//									prob *= unaryRule.getScore();
-//									Trace trace = new Trace(prob, 0, null, unaryRule);
-//									trace.leftRank = 0;
-//									maxHeap.add(trace);
-//								}
+	//								List<Trace> bestK = score[i][j].get(parent);
+	//								if (bestK != null){
+	//									double prob = bestK.get(0).score;
+	//									prob *= unaryRule.getScore();
+	//									Trace trace = new Trace(prob, 0, null, unaryRule);
+	//									trace.leftRank = 0;
+	//									maxHeap.add(trace);
+	//								}
 						}
 					}
 
 					List<Trace> bestList = new LinkedList<Trace>();
-					while (!bestK.isEmpty()){
+					while (!bestK2.isEmpty()){
 						bestList.add(0, bestK2.poll());
 					}
 					score[i][j].put(parent, bestList);
+			      }
 				}
 			}
 		}
 
 		List<Tree<String>> annotatedBestParseK = new ArrayList<Tree<String>>();
-		for (int k = 0; k < K; k++){
+		List<Trace> bestK = score[0][sizeOfWords].get(root);
+		int topK = K;
+		if (K > bestK.size()){
+			topK = bestK.size();
+		} 
+		for (int k = 0; k < topK; k++){
 			Tree<String> annotatedBestParse = buildTree(sentence, 0, sizeOfWords, root, k, score);
 			annotatedBestParseK.add(TreeAnnotations.unAnnotateTree(annotatedBestParse));
 		}
 //		System.out.print(Trees.PennTreeRenderer.render(annotatedBestParse));
-		return annotatedBestParseK.get(0);
+		sumTop += topK;
+		System.out.println("topK: " + topK +"\n sumTop: " + sumTop);
+		return annotatedBestParseK.get(topK-1);
 	}
 	
 	public Tree<String> buildUnaryTree(List<String> path, List<Tree<String>> leaves){
@@ -198,7 +207,7 @@ public class CKYParserK implements Parser{
 //		int[] trace = back[i][j].get(parent);
 		List<Trace> bestK = score[i][j].get(parent);
 		Trace trace = bestK.get(rank);
-			if (parent == root && trace.split == 0){
+			if (parent == root && trace.unaryRule == null && trace.binaryRule == null){
 				return new Tree<String> (parent);
 			}
 			if (i==j-1){ 

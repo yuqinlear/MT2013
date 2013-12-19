@@ -36,5 +36,16 @@ public class Trace implements Comparable<Trace> {
 		this.unaryRule = unaryRule;
 	}
 	
+	@Override
+	public String toString(){
+		if (binaryRule != null){
+			return binaryRule.toString() + "\n score: " + score + " split: " + split;
+		} else if (unaryRule != null){
+			return unaryRule.toString() + "\n score: " + score + " split: " + split;
+		} else {
+			return "score: " + score + " split: " + split;
+		}
+
+	}
 
 }

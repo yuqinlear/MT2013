@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import nlp.io.PennTreebankReader;
 import nlp.ling.Tree;
+import nlp.ling.TreeReader;
 import nlp.ling.Trees;
 import nlp.parser.EnglishPennTreebankParseEvaluator;
 import nlp.util.*;
@@ -695,6 +696,8 @@ public class PCFGParserTester {
     startTime = System.currentTimeMillis();
     System.out.print("Loading training trees ... ");
     List<Tree<String>> trainTrees = readTrees(basePath, 5, 5, maxTrainLength);
+//    String filePath = basePath + "train50k_len50.5.mrg";
+//    List<Tree<String>> trainTrees = TreeReader.readTreesFromFile(filePath, "(", ")");
     System.out.println("done. (" + trainTrees.size() + " trees)");
     endTime = System.currentTimeMillis();
     System.out.println("time elapsed: "+ (endTime - startTime)/1000);
@@ -706,6 +709,7 @@ public class PCFGParserTester {
     	
       System.out.print("Loading in-domain dev trees ... ");
       List<Tree<String>> testTreesInDomain = readTrees(basePath, 5, 5, maxTestLength);
+//      List<Tree<String>> testTreesInDomain = TreeReader.readTreesFromFile(filePath, "(", ")");
       System.out.println("done. (" + testTreesInDomain.size() + " trees)");
       
 //      System.out.print("Loading out-of-domain dev trees ... ");
