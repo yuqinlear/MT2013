@@ -68,7 +68,7 @@ public class CKYParser2 implements Parser {
 						rightChild = binaryRule.rightChild;
 						for (int k = i+1; k < j; k++){
 								// set score by binary rule
-									if (score[i][k] != null && score[k][j] != null){
+//									if (score[i][k] != null && score[k][j] != null){
 										if (score[i][k].containsKey(leftChild) && score[k][j].containsKey(rightChild)){
 											double prob = score[i][k].get(leftChild) * score[k][j].get(rightChild) * binaryRule.getScore();
 											Double currentScore = score[i][j].get(parent);
@@ -78,7 +78,7 @@ public class CKYParser2 implements Parser {
 												back[i][j].put(parent, trace);
 											}
 										}
-									}
+//									}
 								}
 					}
 						// set score by unary rule

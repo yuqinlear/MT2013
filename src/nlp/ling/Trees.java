@@ -389,7 +389,7 @@ public class Trees {
 
   public static void main(String[] args) {
 //	PennTreeReader reader = new PennTreeReader(new StringReader("(S 第 (S (S (S 59) (S /)) (S 99)) 号 决议)"));
-	PennTreeReader reader = new PennTreeReader(new StringReader("(S (S (S (S (S 59) (S /)) (S (S 9) (S .))) (S .)) (S (S 联合国) 同 (S (S (S 阿拉伯) (S 国家)) (S 联盟)) 的 合作))"));
+	PennTreeReader reader = new PennTreeReader(new StringReader("(S (S (S 2004 年 12 月 (S 10) 日) 第 (S (S (S 59) /) 121) 号 决议 (S (S ，) 以及) (S (S 人权) 委员会) 决议)"));
 
 //    PennTreeReader reader = new PennTreeReader(new StringReader("((S (NP (DT the) (JJ quick) (JJ brown) (NN fox)) (VP (VBD jumped) (PP (IN over) (NP (DT the) (JJ lazy) (NN dog)))) (. .)))"));
     Tree<String> tree = reader.next();
