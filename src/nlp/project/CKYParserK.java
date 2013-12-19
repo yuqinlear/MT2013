@@ -3,6 +3,7 @@ package nlp.project;
 import java.util.ArrayList; 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ import nlp.ling.Trees;
 import nlp.util.CounterMap;
 import nlp.util.Indexer;
 
-public class CKYParserK {
+public class CKYParserK implements Parser{
 	static final String root = "S";
 	static int rootIndex;
 	static final int K = 2;
@@ -45,7 +46,8 @@ public class CKYParserK {
   UnaryClosure uc;
   CounterMap<String, String> tempLexicon;
 	@SuppressWarnings("unchecked")
-	public List<Tree<String>> getBestParse(List<String> sentence) {
+	@Override
+	public Tree<String> getBestParse(List<String> sentence) {
 		int sizeOfWords = sentence.size();
 		int sizeOfNonTer = indexer.size();
 		Map<String, List<Trace>>[][] score= new HashMap[sizeOfWords+1][sizeOfWords+1];
@@ -63,7 +65,11 @@ public class CKYParserK {
 				bestK = score[i][i+1].get(unaryRule.parent);
 				if (bestK != null){
 					insert(bestK, new Trace(unaryRule.score, 0, null, unaryRule));
+				} else {
+					bestK = new ArrayList<Trace>();
+					bestK.add(new Trace(unaryRule.score, 0, null, unaryRule));
 				}
+				score[i][i+1].put(unaryRule.parent, bestK);
 //				score[i][i+1].put(unaryRule.parent, unaryRule.score);
 //				int[] trace = {indexer.indexOf(unaryRule.child)}; // the size of trace is 1 if it is a unary rule;
 //				back[i][i+1].put(unaryRule.parent, trace);
@@ -80,7 +86,7 @@ public class CKYParserK {
 				
 				for (int parentIndex = 1; parentIndex < sizeOfNonTer; parentIndex++){
 					String parent = indexer.get(parentIndex);
-					Queue<Trace> maxHeap= new PriorityQueue<Trace>(K, Collections.reverseOrder());
+					Queue<Trace> maxHeap= new PriorityQueue<Trace>(K+1, Collections.reverseOrder());
 					List<BinaryRule> binaryRules = grammar.getBinaryRulesByParent(parent);
 					for (BinaryRule binaryRule : binaryRules){
 						leftChild = binaryRule.leftChild;
@@ -99,22 +105,12 @@ public class CKYParserK {
 										}
 								}
 					}
-					// set score by unary rule
-					List<UnaryRule> unaryRules = uc.getClosedUnaryRulesByChild(parent);
-					for (UnaryRule unaryRule : unaryRules){
-					
-							List<Trace> bestK = score[i][j].get(parent);
-							double prob = bestK.get(0).score;
-								prob *= unaryRule.getScore();
-								Trace trace = new Trace(prob, 0, null, unaryRule);
-								trace.leftRank = 0;
-								maxHeap.add(trace);
-					}
-					List<Trace> bestK = new ArrayList<Trace>();
-					while (bestK.size() < K){
+
+					Queue<Trace> bestK = new PriorityQueue<Trace>(K); // min heap
+					while (bestK.size() < K && !maxHeap.isEmpty()){
 						Trace trace = maxHeap.poll();
-						bestK.add(0, trace);;
- 
+						bestK.add(trace);
+						if (trace.binaryRule != null){
 							List<Trace> leftBestK = score[i][trace.split].get(trace.binaryRule.leftChild);
 							List<Trace> rightBestK = score[trace.split][j].get(trace.binaryRule.rightChild);
 							if (trace.leftRank < leftBestK.size() -1 ){
@@ -129,17 +125,52 @@ public class CKYParserK {
 								trace2.rightRank++;
 								maxHeap.add(trace2);
 							}
-						} else if (trace.unaryRule != null){
-							List<Trace> unaryBestK = score[i][j].get(trace.unaryRule.child);
-							if (trace.leftRank < unaryBestK.size() - 1){
-								double prob = unaryBestK.get(trace.leftRank + 1).score * trace.unaryRule.score;
-								Trace trace3 = new Trace(prob, 0, null, trace.unaryRule);
-								trace3.leftRank++;
-								maxHeap.add(trace3);
-							}
+						} 
+//						else if (trace.unaryRule != null){
+//							List<Trace> unaryBestK = score[i][j].get(trace.unaryRule.child);
+//							if (trace.leftRank < unaryBestK.size() - 1){
+//								double prob = unaryBestK.get(trace.leftRank + 1).score * trace.unaryRule.score;
+//								Trace trace3 = new Trace(prob, 0, null, trace.unaryRule);
+//								trace3.leftRank++;
+//								maxHeap.add(trace3);
+//							}
+//						}
+					}
+					
+					// set score by unary rule
+						Queue<Trace> bestK2 = new PriorityQueue<Trace>();
+						
+						List<UnaryRule> unaryRules = uc.getClosedUnaryRulesByChild(parent);
+						for (UnaryRule unaryRule : unaryRules){
+							Iterator<Trace> iter = bestK.iterator();
+							while (iter.hasNext()){
+								Trace trace = iter.next();
+								bestK2.add(trace);
+								if (bestK2.size() > K){
+									bestK2.poll();
+								}
+								double prob = trace.score * unaryRule.score;
+								Trace trace3 = new Trace(prob, 0, null, unaryRule);
+								bestK2.add(trace3);
+								if (bestK2.size() > K){
+									bestK2.poll();
+								}
+//								List<Trace> bestK = score[i][j].get(parent);
+//								if (bestK != null){
+//									double prob = bestK.get(0).score;
+//									prob *= unaryRule.getScore();
+//									Trace trace = new Trace(prob, 0, null, unaryRule);
+//									trace.leftRank = 0;
+//									maxHeap.add(trace);
+//								}
 						}
 					}
-					score[i][j].put(parent, bestK);
+
+					List<Trace> bestList = new LinkedList<Trace>();
+					while (!bestK.isEmpty()){
+						bestList.add(0, bestK2.poll());
+					}
+					score[i][j].put(parent, bestList);
 				}
 			}
 		}
@@ -150,7 +181,7 @@ public class CKYParserK {
 			annotatedBestParseK.add(TreeAnnotations.unAnnotateTree(annotatedBestParse));
 		}
 //		System.out.print(Trees.PennTreeRenderer.render(annotatedBestParse));
-		return annotatedBestParseK;
+		return annotatedBestParseK.get(0);
 	}
 	
 	public Tree<String> buildUnaryTree(List<String> path, List<Tree<String>> leaves){
@@ -304,12 +335,12 @@ public class CKYParserK {
   	lexicon.setCount("fish", "V", 0.6);
   	lexicon.setCount("tanks", "V", 0.3);
   	lexicon.setCount("with", "P", 1.0);
-//  	Parser parser = new CKYParserK(grammar, lexicon);
-//  	String[] strArr = {"fish", "people", "fish", "tanks"};
-//  	List<String> sentence = Arrays.asList(strArr);
-//  	String root = "S";
-//  	Tree<String> tree = parser.getBestParse(sentence);
-//  	System.out.println(tree.toString());
+  	Parser parser = new CKYParserK(grammar, lexicon);
+  	String[] strArr = {"fish", "people", "fish", "tanks"};
+  	List<String> sentence = Arrays.asList(strArr);
+  	String root = "S";
+  	Tree<String> tree = parser.getBestParse(sentence);
+  	System.out.println(tree.toString());
   }
 
 }
