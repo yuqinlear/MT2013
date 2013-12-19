@@ -12,7 +12,7 @@ public class Evaluator {
 	 * get the score from 1 to n gram evaluation, calculate their geometric median and multiply the brevity penalty;
 	 * @param candidates - possible translated results
 	 * @param references - human translation references
-	 * @param n - the height order of n gram number, we will calculate from 1 to n
+	 * @param n - the highest order of n gram number, we will calculate from 1 to n
 	 * @return double value between 0.0 and 1.0, return -1.0 if input 
 	 */
 	public static double bleu(List<List<String>> candidates, List<List<String>> references, int n){
