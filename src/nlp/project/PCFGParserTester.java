@@ -704,7 +704,8 @@ public class PCFGParserTester {
     startTime = endTime;
     // TODO : Build a better parser!
 //    Parser parser = new BaselineParser(trainTrees);
-  Parser parser = new CKYParserK(trainTrees);
+//    Parser parser = new CKYParser2(trainTrees);
+    CKYParserK parser = new CKYParserK(trainTrees);
     if (testMode.equalsIgnoreCase("in-domain")) {
     	
       System.out.print("Loading in-domain dev trees ... ");
@@ -778,6 +779,7 @@ public class PCFGParserTester {
       if (verbose) {
         System.out.println("Guess:\n" + Trees.PennTreeRenderer.render(guessedTree));
         System.out.println("Gold:\n" + Trees.PennTreeRenderer.render(testTree));
+        System.out.println(testTree);
       }
       eval.evaluate(guessedTree, testTree);
     	System.out.println("size: " + testSentence.size() + "  time elapsed: " + (endTime-startTime)/1000);
@@ -786,30 +788,30 @@ public class PCFGParserTester {
     eval.display(true);
   }
   
-//  private static void testParserK(CKYParserK parser, List<Tree<String>> testTrees, boolean verbose) {
-//		int notPossibleParse = 0;
-//		long startTime = 0, endTime = 0;
-//    EnglishPennTreebankParseEvaluator.LabeledConstituentEval<String> eval = new EnglishPennTreebankParseEvaluator.LabeledConstituentEval<String>(Collections.singleton("ROOT"), new HashSet<String>(Arrays.asList(new String[]{"''", "``", ".", ":", ","})));
-//    for (Tree<String> testTree : testTrees) {
-//      startTime = System.currentTimeMillis();
-//      List<String> testSentence = testTree.getYield();
-//      List<Tree<String>> guessedTrees = parser.getBestParse(testSentence);
-//      endTime = System.currentTimeMillis();
-//      for (Tree<String> guessedTree : guessedTrees){
-//          if (guessedTree.isLeaf()){
-//            	notPossibleParse++;
-//            }
-//            if (verbose) {
-//              System.out.println("Guess:\n" + Trees.PennTreeRenderer.render(guessedTree));
-//              System.out.println("Gold:\n" + Trees.PennTreeRenderer.render(testTree));
-//            }
-//            eval.evaluate(guessedTree, testTree);
-//          	System.out.println("size: " + testSentence.size() + "  time elapsed: " + (endTime-startTime)/1000);
-//      }
-//    }
-//    System.out.println("not possible to be parsed: " + notPossibleParse);
-//    eval.display(true);
-//  }
+  private static void testParserK(CKYParserK parser, List<Tree<String>> testTrees, boolean verbose) {
+		int notPossibleParse = 0;
+		long startTime = 0, endTime = 0;
+    EnglishPennTreebankParseEvaluator.LabeledConstituentEval<String> eval = new EnglishPennTreebankParseEvaluator.LabeledConstituentEval<String>(Collections.singleton("ROOT"), new HashSet<String>(Arrays.asList(new String[]{"''", "``", ".", ":", ","})));
+    for (Tree<String> testTree : testTrees) {
+      startTime = System.currentTimeMillis();
+      List<String> testSentence = testTree.getYield();
+      List<Tree<String>> guessedTrees = parser.getBestParseK(testSentence);
+      endTime = System.currentTimeMillis();
+      for (Tree<String> guessedTree : guessedTrees){
+          if (guessedTree.isLeaf()){
+            	notPossibleParse++;
+            }
+            if (verbose) {
+              System.out.println("Guess:\n" + Trees.PennTreeRenderer.render(guessedTree));
+              System.out.println("Gold:\n" + Trees.PennTreeRenderer.render(testTree));
+            }
+            eval.evaluate(guessedTree, testTree);
+          	System.out.println("size: " + testSentence.size() + "  time elapsed: " + (endTime-startTime)/1000);
+      }
+    }
+    System.out.println("not possible to be parsed: " + notPossibleParse);
+    eval.display(true);
+  }
 
   private static List<Tree<String>> readTrees(String basePath, int low, int high, int maxLength) {
   	int actualTestTreeNum = 0;

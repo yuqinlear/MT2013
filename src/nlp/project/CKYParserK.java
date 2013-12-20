@@ -46,9 +46,15 @@ public class CKYParserK implements Parser{
   Grammar grammar;
   UnaryClosure uc;
   CounterMap<String, String> tempLexicon;
+  	@Override
+  	public Tree<String> getBestParse(List<String> sentence){
+  		List<Tree<String>> bestParseK = getBestParseK(sentence);
+//  		return bestParseK.get(bestParseK.size() - 1);
+  		return bestParseK.get(0);
+  	}
+  	
 	@SuppressWarnings("unchecked")
-	@Override
-	public Tree<String> getBestParse(List<String> sentence) {
+	public List<Tree<String>> getBestParseK(List<String> sentence) {
 		int sizeOfWords = sentence.size();
 		int sizeOfNonTer = indexer.size();
 		Map<String, List<Trace>>[][] score= new HashMap[sizeOfWords+1][sizeOfWords+1];
@@ -118,12 +124,14 @@ public class CKYParserK implements Parser{
 								double prob = leftBestK.get(trace.leftRank + 1).score * rightBestK.get(trace.rightRank).score * trace.binaryRule.score;
 								Trace trace1 = new Trace(prob, trace.split, trace.binaryRule, null);
 								trace1.leftRank++;
+								trace1.rightRank = trace.rightRank;
 								maxHeap.add(trace1);
 							}
 							if (trace.rightRank < rightBestK.size() - 1){
 								double prob = leftBestK.get(trace.leftRank).score * rightBestK.get(trace.rightRank + 1).score * trace.binaryRule.score;
 								Trace trace2 = new Trace(prob, trace.split, trace.binaryRule, null);
 								trace2.rightRank++;
+								trace2.leftRank = trace.leftRank;
 								maxHeap.add(trace2);
 							}
 						} 
@@ -145,11 +153,7 @@ public class CKYParserK implements Parser{
 						for (UnaryRule unaryRule : unaryRules){
 							Iterator<Trace> iter = bestK.iterator();
 							while (iter.hasNext()){
-								Trace trace = iter.next();
-								bestK2.add(trace);
-								if (bestK2.size() > K){
-									bestK2.poll();
-								}
+								Trace trace = iter.next();								
 								double prob = trace.score * unaryRule.score;
 								Trace trace3 = new Trace(prob, 0, null, unaryRule);
 								bestK2.add(trace3);
@@ -190,7 +194,7 @@ public class CKYParserK implements Parser{
 //		System.out.print(Trees.PennTreeRenderer.render(annotatedBestParse));
 		sumTop += topK;
 		System.out.println("topK: " + topK +"\n sumTop: " + sumTop);
-		return annotatedBestParseK.get(topK-1);
+		return annotatedBestParseK;
 	}
 	
 	public Tree<String> buildUnaryTree(List<String> path, List<Tree<String>> leaves){
@@ -222,7 +226,7 @@ public class CKYParserK implements Parser{
 					}
 			}
 			if (trace.unaryRule != null){
-				Tree<String> leaves = buildTree(sentence, i, j, trace.unaryRule.child, trace.leftRank, score);
+				Tree<String> leaves = buildTree(sentence, i, j, trace.unaryRule.child, 0, score);
 //				UnaryRule unaryRule = new UnaryRule(parent, indexer.get(trace[0]));
 				List<String> path = uc.getPath(trace.unaryRule);
 				Tree<String> unaryTree = buildUnaryTree(path.subList(0, path.size() - 1), Collections.singletonList(leaves));
